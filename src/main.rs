@@ -94,6 +94,15 @@ fn user_process_3() -> ! {
     // uart_driver.write_str("\x1B[2J\x1B[H");
     uart_driver.write_char(b'\n');
     uart_driver.write_str("Hello from process 2\n\n");
+
+
+    unsafe { 
+        core::arch::asm!(
+            "ecall",
+            in("a2") 0x1,
+        );
+    }
+
     uart_shell();
 }
 
@@ -333,13 +342,15 @@ impl UartDriver {
              }
              core::ptr::read_volatile(core::ptr::addr_of!((*self.registers).thr))
          }
-        
      }
 }
 
 
 #[unsafe(no_mangle)]
 extern "C" fn trap_handler() {
+    let request: usize;
+    unsafe { core::arch::asm!("addi {0}, a2, 0", out(reg) request); }
+
     let cause: usize;
     let mut sepc: usize;
     let uart = UartDriver::new(UART_ADDR);
@@ -363,7 +374,19 @@ extern "C" fn trap_handler() {
             0x5 => uart.write_str("Load address fault\n"),
             0x6 => uart.write_str("Store/AMO address misaligned\n"),
             0x7 => uart.write_str("Store/AMO access fault\n"),
-            0x8 => uart.write_str("Environment call from U-mode\n"),
+            // ecall interface
+            0x8 => {
+                // Let our ecall convention be:
+                // U mode stores in a2 the type of ecall,
+                // And stores in a3, a4, etc, other arguments concerning the ecall
+                uart.write_str("Environment call from U-mode\n");
+
+                match request {
+                    0x1 => uart.write_str("Allocate memory request\n"),
+                    _ => uart.write_str("Unknown request\n"),
+                };
+                1
+            },
             0x9 => uart.write_str("Environment call from S-mode\n"),
             0xC => uart.write_str("Instruction page fault\n"),
             0xD => uart.write_str("Load page fault\n"),
@@ -382,7 +405,14 @@ extern "C" fn trap_handler() {
         };
 
         sepc += len;
-        unsafe { core::arch::asm!("csrw sepc, {0}", in(reg) sepc); }
+
+        let sscratch: usize;
+        unsafe { 
+            core::arch::asm!("csrr {0}, sscratch", out(reg) sscratch); 
+            core::ptr::write((sscratch + 264) as *mut usize, sepc);
+        }
+        
+        // unsafe { core::arch::asm!("csrw sepc, {0}", in(reg) sepc); }
     } else {
         uart.write_str("\nInterrupt detected\n");
 
