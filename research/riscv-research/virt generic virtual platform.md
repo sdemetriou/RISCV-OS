@@ -1,0 +1,10 @@
+- 512 RV32GC/RV64GC cores
+- Core Local INterruptor (CLINT)
+- Platform Level Interrupt Controller (PLIC)
+- CFI parallel NOR flash memory
+- 1 [[NS16550 compatible UART]]
+- 1 Google Goldfish RTC
+- 1 SiFive Test device
+- 8 virtio-mmio transport devices
+- 1 generic PCIe host bridge
+- `fw_cfg` device that allows a guest to obtain data from QEMU

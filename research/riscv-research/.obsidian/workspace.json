@@ -1,0 +1,315 @@
+{
+  "main": {
+    "id": "77af0a9df8262d72",
+    "type": "split",
+    "children": [
+      {
+        "id": "c840ee5815fa15ac",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "bbb209352121d0ee",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Sv39.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Sv39"
+            }
+          },
+          {
+            "id": "b34404ae9c9b71a0",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Sv32.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Sv32"
+            }
+          },
+          {
+            "id": "1cd994068c25df3e",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "SATP Reg.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "SATP Reg"
+            }
+          },
+          {
+            "id": "b261297c0b3840db",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          },
+          {
+            "id": "dc991d9f2d319d35",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Sv32.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Sv32"
+            }
+          },
+          {
+            "id": "857a1064b9630db5",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          },
+          {
+            "id": "83fb7739d6121a08",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "NS16550 compatible UART.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "NS16550 compatible UART"
+            }
+          },
+          {
+            "id": "948c4ac5ad8b4ecf",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Shell.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Shell"
+            }
+          },
+          {
+            "id": "ace574090cbcd72d",
+            "type": "leaf",
+            "state": {
+              "type": "image",
+              "state": {
+                "file": "images/Pasted image 20260815195507.png"
+              },
+              "icon": "lucide-image",
+              "title": "Pasted image 20260815195507"
+            }
+          }
+        ],
+        "currentTab": 8
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "ad93665776594d87",
+    "type": "split",
+    "children": [
+      {
+        "id": "8a06cc6891d53c7d",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "22df9d3fd77fdfeb",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "ac50a3c9d5ec1d35",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "8caeea62a436d985",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "6e051b242a1bebcf",
+    "type": "split",
+    "children": [
+      {
+        "id": "3cfdaac48ff3aad1",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "dbf7f81cc7597992",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "1d12cfb8d1427711",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "1e6274a93cbec62c",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "a23613896544d770",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "f42470f67065c26c",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "22df9d3fd77fdfeb",
+  "lastOpenFiles": [
+    "images/Pasted image 20260815193658.png",
+    "images/Pasted image 20260815193710.png",
+    "PPN.md",
+    "NS16550 compatible UART.md",
+    "virt generic virtual platform.md",
+    "SATP Reg.md",
+    "Shell.md",
+    "images/Pasted image 20260815195507.png",
+    "SXLEN.md",
+    "ASID.md",
+    "MODE field.md",
+    "Sv39.md",
+    "Sv32.md",
+    "Radix tree.md",
+    "images/Pasted image 20260803195444.png",
+    "images",
+    "images/Pasted image 20260803224623.png",
+    "images/Pasted image 20260803224620.png",
+    "images/Pasted image 20260803201850.png",
+    "images/Pasted image 20260803201145.png",
+    "images/Pasted image 20260803201046.png",
+    "images/Pasted image 20260803201035.png",
+    "radix-tree page table.md",
+    "Welcome.md"
+  ]
+}

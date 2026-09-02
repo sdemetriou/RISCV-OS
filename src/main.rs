@@ -63,31 +63,35 @@ impl ProcessEntry {
     }
 }
 
-static PROCSTACK_SIZE: usize = 512;
-static PROC_NUM: usize = 9;
+const PROCSTACK_SIZE: usize = 512;
+const PROC_NUM: usize = 9;
+const PAGESIZE: usize = 4096;
+const PAGE_NUM: usize = 64;
+
 static mut PROCSTACK: [[u8; PROCSTACK_SIZE]; PROC_NUM] = [[0; PROCSTACK_SIZE]; PROC_NUM];
 static mut PROC_ENTRIES: [ProcessEntry; PROC_NUM] = [ProcessEntry::new(); PROC_NUM];
+static mut RPT_ADDR: usize = 0x0;
 
 
 
 
 fn user_process_1() -> ! {
     let uart_driver = UartDriver::new(UART_ADDR);
-    uart_driver.write_str("\x1B[2J\x1B[H");
+    // uart_driver.write_str("\x1B[2J\x1B[H");
     uart_driver.write_char(b'\n');
     uart_driver.write_str("Hello from process 0\n\n");
     uart_shell();
 }
 fn user_process_2() -> ! {
     let uart_driver = UartDriver::new(UART_ADDR);
-    uart_driver.write_str("\x1B[2J\x1B[H");
+    // uart_driver.write_str("\x1B[2J\x1B[H");
     uart_driver.write_char(b'\n');
     uart_driver.write_str("Hello from process 1\n\n");
     uart_shell();
 }
 fn user_process_3() -> ! {
     let uart_driver = UartDriver::new(UART_ADDR);
-    uart_driver.write_str("\x1B[2J\x1B[H");
+    // uart_driver.write_str("\x1B[2J\x1B[H");
     uart_driver.write_char(b'\n');
     uart_driver.write_str("Hello from process 2\n\n");
     uart_shell();
@@ -114,7 +118,7 @@ fn scheduler() {
     // And then return and let the trap handler return too
     
     let uart_driver: UartDriver = UartDriver::new(UART_ADDR);
-    // uart_driver.write_str("\nScheduler running.\n");
+    uart_driver.write_str("\nScheduler running.\n");
     let mut sstatus: usize;
     let mut sscratch: usize;
     unsafe {
@@ -125,7 +129,7 @@ fn scheduler() {
         core::arch::asm!("csrr {0}, sstatus", out(reg) sstatus);
         sstatus = sstatus & !(1 << 8);
         core::arch::asm!("csrw sstatus, {0}", in(reg) sstatus);
-        // uart_driver.write_str("\nScheduler finished.\n");
+        uart_driver.write_str("\nScheduler finished.\n");
 
         // uart_shell();
         CURRENT_PROCESS = (CURRENT_PROCESS + 1) % PROC_NUM;
@@ -151,24 +155,64 @@ fn init_processes() {
 }
 
 
+#[derive(Clone, Copy)]
 struct MemoryNode {
     memory: [u8; 4096],
-    previous_node: usize,
     next_node: usize,
 }
 
-fn init_freelist() {
-    // We want to be able to return a pointer to a memory address that is zeroed out and can be used
-    // for whatever.
-    //
-    // One approach is to separate a big chunk of memory into standard chunks of a fixed size each.
-    // Like 4096 bytes each.
-    // So if a user wants 4097 bytes, they get 2 chunks. We round up. 
-    // But aren't we wasting memory?
-    // I suppose we could tell the next node after "hey, you can use 4095 bytes from the previous
-    // node"
-
+impl MemoryNode {
+    const fn new() -> MemoryNode {
+        MemoryNode { memory: [0; PAGESIZE], next_node: 0x0 }
+    }
 }
+
+static mut FREELIST: [MemoryNode; PAGE_NUM] = [MemoryNode::new(); PAGE_NUM]; 
+
+
+fn kmalloc(num_bytes: usize) -> usize {
+    let num_pages = if num_bytes % PAGESIZE == 0 {
+        num_bytes / 4096
+    } else {
+        (num_bytes / 4096) as usize + 1
+    };
+
+    let mut free_pages_found = 0;
+    let mut freelist_idx: usize = 0;
+    let mut first_page: usize = 0x0;
+    while (free_pages_found != num_pages) {
+        free_pages_found = if unsafe { FREELIST[freelist_idx].next_node == 0x0 as usize } {
+            unsafe { first_page = core::ptr::addr_of_mut!(FREELIST[freelist_idx]) as usize };
+            free_pages_found + 1
+        } else {
+            first_page = 0x0;
+            0
+        };
+        freelist_idx += 1;
+    };
+
+    if free_pages_found == 0 {
+        return 0x0;
+    }
+    // link the pages together, and return the first page address.
+    unsafe {
+        let page_array = first_page as *mut MemoryNode; 
+        for i in 0..free_pages_found-1 {
+            let current_page_ptr = page_array.add(i as usize);       
+            let next_page_ptr = page_array.add((i+1) as usize);
+            (*current_page_ptr).next_node = next_page_ptr as usize;
+        }
+    }
+    first_page
+}
+
+
+fn init_rpt() {
+    unsafe {
+        RPT_ADDR = kmalloc(4096);
+    }
+}
+
 
 fn init() {
     // clearing bss section
@@ -185,6 +229,8 @@ fn init() {
     unsafe { core::arch::asm!("csrr {0}, sstatus", out(reg) sstatus); }
     sstatus |= 0x2;
     unsafe { core::arch::asm!("csrw sstatus, {0}", in(reg) sstatus); }
+    // setting up sv39 paging
+    init_rpt();
     // setting up user process pool
     init_processes();
     // enabling timer interrupts
@@ -192,12 +238,11 @@ fn init() {
     unsafe { core::arch::asm!("csrr {0}, sie", out(reg) sie); }
     sie |= 0x20;
     unsafe { core::arch::asm!("csrw sie, {0}", in(reg) sie); }
-
 }
 
 
 fn intro(uart_driver: &UartDriver) {
-    uart_driver.write_str("\x1B[2J\x1B[H");
+    // uart_driver.write_str("\x1B[2J\x1B[H");
     uart_driver.write_str(logo);
     uart_driver.write_str("\n");
     uart_driver.write_str("\x1B[0;34mVersion 1.0\x1B[0m\n");
@@ -215,13 +260,18 @@ fn uart_shell() -> ! {
     let uart_driver = UartDriver::new(UART_ADDR);
     intro(&uart_driver);
 
+    // let mut input: [u8; 4096] = [0x0; 4096];
+    // let mut i: usize = 0;
+
     uart_driver.write_str("\x1B[0;36m>> \x1B[0m");
     loop { 
         let input_c = uart_driver.read_char();
+        // input[i] = input_c;
         uart_driver.write_char(input_c);
         if input_c == 0x0D {
             uart_driver.write_str("\n\x1B[0;36m>> \x1B[0m");
         }
+        // i += 1;
     }
 }
 
@@ -298,14 +348,30 @@ extern "C" fn trap_handler() {
         core::arch::asm!("csrr {0}, scause", out(reg) cause); 
         core::arch::asm!("csrr {0}, sepc", out(reg) sepc);
     }
-    let CAUSE_IS_EBREAK = cause >> 63 == 0b0;
-    let IS_TIMER_INTERRUPT = cause & !(1 << 63) == 0x5;
+    let IS_NOT_INTERRUPT = cause >> 63 == 0b0;
+    let EXCEPTION_CODE = cause & !(1 << 63);
+    
 
+    if IS_NOT_INTERRUPT {
+        uart.write_str("Non-interrupt detected!\n");
 
-    // uart.write_str("Trap encountered!\n");
-
-    if CAUSE_IS_EBREAK {
-        uart.write_str("ebreak detected!\n");
+        match EXCEPTION_CODE {
+            0x1 => uart.write_str("Instruction access fault\n"),
+            0x2 => uart.write_str("Illegal instruction\n"),
+            0x3 => uart.write_str("Breakpoint\n"),
+            0x4 => uart.write_str("Load address misaligned\n"),
+            0x5 => uart.write_str("Load address fault\n"),
+            0x6 => uart.write_str("Store/AMO address misaligned\n"),
+            0x7 => uart.write_str("Store/AMO access fault\n"),
+            0x8 => uart.write_str("Environment call from U-mode\n"),
+            0x9 => uart.write_str("Environment call from S-mode\n"),
+            0xC => uart.write_str("Instruction page fault\n"),
+            0xD => uart.write_str("Load page fault\n"),
+            0xF => uart.write_str("Store/AMO page fault\n"),
+            0x12 => uart.write_str("Software check\n"),
+            0x13 => uart.write_str("Hardware error\n"),
+            _ => uart.write_str("Unknown exception\n"),
+        };
 
 
         let instruction = unsafe { *(sepc as *const u16) };
@@ -318,32 +384,34 @@ extern "C" fn trap_handler() {
         sepc += len;
         unsafe { core::arch::asm!("csrw sepc, {0}", in(reg) sepc); }
     } else {
-        // uart.write_str("\nInterrupt detected\n");
         uart.write_str("\nInterrupt detected\n");
 
 
-        if IS_TIMER_INTERRUPT {
-            let mut now: usize;
-            unsafe { core::arch::asm!("csrr {0}, time", out(reg) now); }
-            now += 10000000;
+        match EXCEPTION_CODE {
+            0x1 => uart.write_str("Supervisor software interrupt\n"),
+            0x5 => {
+                uart.write_str("Supervisor timer interrupt\n");
+                let mut now: usize;
+                unsafe { core::arch::asm!("csrr {0}, time", out(reg) now); }
+                now += 10000000;
 
-
-            unsafe { 
-                core::arch::asm!(
-                    "ecall",
-                    in("a0") now,
-                    in ("a6") 0,
-                    in ("a7") 0x54494D45
-                );
-                scheduler();
-                return
-            }
-        }
+                unsafe { 
+                    core::arch::asm!(
+                        "ecall",
+                        in("a0") now,
+                        in ("a6") 0,
+                        in ("a7") 0x54494D45
+                    );
+                    scheduler();
+                    return
+                }
+            },
+            0x9 => uart.write_str("Supervisor external interrupt\n"),
+            0xD => uart.write_str("Counter-overflow interrupt\n"),
+            _ => uart.write_str("Unknown interrupt\n"),
+        };
     }
-
 }
-
-
 
 
 #[panic_handler]
