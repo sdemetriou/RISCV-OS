@@ -3,6 +3,7 @@
 
 use core::ptr;
 use core::mem;
+mod syscalls;
 
 core::arch::global_asm!(include_str!("entry.s"));
 
@@ -73,8 +74,6 @@ static mut PROC_ENTRIES: [ProcessEntry; PROC_NUM] = [ProcessEntry::new(); PROC_N
 static mut RPT_ADDR: usize = 0x0;
 
 
-
-
 fn user_process_1() -> ! {
     let uart_driver = UartDriver::new(UART_ADDR);
     // uart_driver.write_str("\x1B[2J\x1B[H");
@@ -94,14 +93,7 @@ fn user_process_3() -> ! {
     // uart_driver.write_str("\x1B[2J\x1B[H");
     uart_driver.write_char(b'\n');
     uart_driver.write_str("Hello from process 2\n\n");
-
-
-    unsafe { 
-        core::arch::asm!(
-            "ecall",
-            in("a2") 0x1,
-        );
-    }
+    let memory = syscalls::raw_malloc(2);
 
     uart_shell();
 }
@@ -129,12 +121,12 @@ fn scheduler() {
     let uart_driver: UartDriver = UartDriver::new(UART_ADDR);
     uart_driver.write_str("\nScheduler running.\n");
     let mut sstatus: usize;
-    let mut sscratch: usize;
+    let mut trapframe: usize;
     unsafe {
         let current_process = CURRENT_PROCESS;
          
-        sscratch = core::ptr::addr_of_mut!(PROC_ENTRIES[current_process].trapframe) as usize;
-        core::arch::asm!("csrw sscratch, {0}", in(reg) sscratch);
+        trapframe = core::ptr::addr_of_mut!(PROC_ENTRIES[current_process].trapframe) as usize;
+        core::arch::asm!("csrw sscratch, {0}", in(reg) trapframe);
         core::arch::asm!("csrr {0}, sstatus", out(reg) sstatus);
         sstatus = sstatus & !(1 << 8);
         core::arch::asm!("csrw sstatus, {0}", in(reg) sstatus);
@@ -348,8 +340,14 @@ impl UartDriver {
 
 #[unsafe(no_mangle)]
 extern "C" fn trap_handler() {
+    let mut trapframe: usize;
     let request: usize;
-    unsafe { core::arch::asm!("addi {0}, a2, 0", out(reg) request); }
+    let return_value: usize;
+
+    unsafe { 
+        core::arch::asm!("csrr {0}, sscratch", out(reg) trapframe); 
+        request = core::ptr::read((trapframe + 96) as *mut usize);
+    }
 
     let cause: usize;
     let mut sepc: usize;
@@ -382,7 +380,14 @@ extern "C" fn trap_handler() {
                 uart.write_str("Environment call from U-mode\n");
 
                 match request {
-                    0x1 => uart.write_str("Allocate memory request\n"),
+                    0x1 => {
+                        uart.write_str("Allocate memory request\n");
+
+                        let num_bytes = unsafe { core::ptr::read((trapframe+104) as *mut usize) } as usize;
+                        return_value = kmalloc(num_bytes);
+                        unsafe { core::ptr::write((trapframe + 80) as *mut usize, return_value); }
+                        1
+                    },
                     _ => uart.write_str("Unknown request\n"),
                 };
                 1
@@ -406,12 +411,9 @@ extern "C" fn trap_handler() {
 
         sepc += len;
 
-        let sscratch: usize;
         unsafe { 
-            core::arch::asm!("csrr {0}, sscratch", out(reg) sscratch); 
-            core::ptr::write((sscratch + 264) as *mut usize, sepc);
+            core::ptr::write((trapframe + 264) as *mut usize, sepc);
         }
-        
         // unsafe { core::arch::asm!("csrw sepc, {0}", in(reg) sepc); }
     } else {
         uart.write_str("\nInterrupt detected\n");

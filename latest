@@ -1,2 +1,6 @@
-break main.rs:402
-break main.rs:408
+break main.rs:388
+break syscalls.rs:6
+break syscalls.rs:13
+break syscalls.rs:14
+break main.rs:96
+break main.rs:98
